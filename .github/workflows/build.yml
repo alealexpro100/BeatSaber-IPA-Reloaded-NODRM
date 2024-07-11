@@ -2,17 +2,16 @@ name: Build
 
 on:
   push:
-    branches-ignore:
-      - gh-pages
-  pull_request:
-    branches:
-      - master
+    tags:
+      - "*.*.*"
 
 defaults:
   run:
     shell: pwsh
 
-permissions: read-all
+permissions:
+  contents: write # For release
+  packages: read
 
 jobs:
   build:
@@ -20,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: ["x86", "x64"]
+        platform: ["x64"]
     env:
       Configuration: Release
       Platform: ${{ matrix.platform }}
@@ -52,3 +51,12 @@ jobs:
         with:
           name: BSIPA-net472-${{ env.Platform }}
           path: BSIPA-Meta/bin/${{ env.Platform }}/${{ env.Configuration }}/net472/
+      - name: Compress
+        run: Compress-Archive "BSIPA-Meta/bin/${{ env.Platform }}/${{ env.Configuration }}/net472/*" BSIPA-net472-${{ env.Platform }}.zip
+      - name: Release it
+        uses: softprops/action-gh-release@v2
+        with:
+          files: BSIPA-net472-${{ env.Platform }}.zip
+          append_body: |
+            Just auto-uploaded release.
+            No more.
